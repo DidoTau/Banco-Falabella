@@ -1,0 +1,44 @@
+CREATE TABLE IF NOT EXISTS  `{{ds_trf_bfa_cl_bi}}.trf_principalidad_integrada`(
+
+    FechaPeriodo DATE OPTIONS( description='Fecha de partición mensual se toma el 1 de cada mes.'),
+    IdCliente NUMERIC,
+    CmrPpal NUMERIC OPTIONS( description='Tenencia CMR.'),
+    BIP NUMERIC OPTIONS( description='Tenencia BIP.'),
+    PAT NUMERIC OPTIONS( description='Tenencia PAT.'),
+    TieneAdicional NUMERIC OPTIONS( description='Cliente adicional.'),
+    CtaVta NUMERIC OPTIONS( description='Tenencia cuenta vista.'),
+    Hipotecario NUMERIC OPTIONS( description='Tenencia crédito hipotecario.'),
+    DAP NUMERIC OPTIONS( description='Tenencia DAP.'),
+    Ahorro NUMERIC OPTIONS( description='Tenencia cuenta de ahorro.'),
+    FFMM NUMERIC OPTIONS( description='Tomado desde trf_cbi_tenencia_integrada.'),
+    CtaCte NUMERIC OPTIONS( description='Tomado desde trf_cbi_tenencia_integrada.'),
+    ABR NUMERIC OPTIONS( description='Tomado desde trf_cbi_tenencia_integrada.'),
+    PAC NUMERIC OPTIONS( description='Tomado desde trf_cbi_tenencia_integrada.\nIF PacEfectivo +  PacExterno  >=1 -> 1'),
+    SegurosIntegral NUMERIC OPTIONS( description='Tomado desde trf_cbi_tenencia_integrada.\nIF FullProteccionContratado + Cesantia+ Desgravamen >=1 -> 1'),
+    DeudaR04 NUMERIC OPTIONS( description='Deuda desde reporte R04.'),
+    DeudaBfD10 NUMERIC OPTIONS( description='Deuda banco desde reporte D10.'),
+    DeudaCMRD10 NUMERIC OPTIONS( description='Deuda cmr desde reporte D10.'),
+    ShareOfDeuda FLOAT64 OPTIONS( description='IF DeudaR04 <> 0 -> \nCASE WHEN 0<(DeudaBfD10 + DeudaCMRD10)/DeudaR04 <=1 THEN (DeudaBfD10 + DeudaCMRD10)/DeudaR04\n WHEN (DeudaBfD10 + DeudaCMRD10)/DeudaR04 >1 THEN 1'),
+    TrxCta FLOAT64 OPTIONS( description='Trx cuenta promedio en los últimos 3 meses.'), 
+    NTrx3M FLOAT64 OPTIONS( description='Trx promedio de cuenta, cmr y quickpay  en los últimos 3 meses.'), 
+    MontoProm3M FLOAT64 OPTIONS( description='Monto promedio de cuenta, cmr y quickpay  en los últimos 3 meses.'), 
+    RubroProm3M FLOAT64 OPTIONS( description='Rubros promedio de cuenta, cmr y quickpay  en los últimos 3 meses.'), 
+    Renta FLOAT64 OPTIONS( description='Renta del cliente.'),
+    SOW FLOAT64 OPTIONS( description='IF Renta <> 0 \n THEN IF MontoProm3M/Renta<=1 \nTHEN MontoProm3M/Renta ELSE 0'), 
+    TrxCtaNorm FLOAT64 OPTIONS(description='TrxCta normalizados: (TrxCta - MIN(TrxCta))/(MAX(TrxCta)-MIN(TrxCta))' ),
+    NTrx3MNorm FLOAT64 OPTIONS(description='NTrx3M normalizados: (NTrx3M - MIN(NTrx3M))/(MAX(NTrx3M)-MIN(NTrx3M))' ),
+    RubroProm3MNorm FLOAT64 OPTIONS(description='RubroProm3M normalizados: (RubroProm3M - MIN(RubroProm3M))/(MAX(RubroProm3M)-MIN(RubroProm3M))' ),
+    PTJETenencia FLOAT64 OPTIONS( description='(CtaCte + CtaVta + TieneCmrPpal + ABR) * 130 + \n(DAP+FFMM+AdicionalCmr+SegurosIntegral+PAC+PAT+Hipotecario) * 60 + \n(BIP+Ahorro) * 30'),
+    PTJEShareOfDeuda FLOAT64 OPTIONS( description='ShareOfDeuda * 1000'),
+    PTJEUsoCta FLOAT64 OPTIONS( description='TrxCtaNorm * 1000'),
+    PTJEMediosDePago FLOAT64 OPTIONS( description='NTrx3MNorm*200 + RubroProm3MNorm*400 + SOW*400'),
+    PTJEPrincipalidad FLOAT64 OPTIONS( description= '(CtaCte + CtaVta + TieneCmrPpal + ABR) * 50 + \n(DAP+FFMM+AdicionalCmr+SegurosIntegral+PAC+PAT+Hipotecario)*20 +\n (BIP+Ahorro)*10 + ShareOfDeuda * 160 + TrxCtaNorm * 80 + SOW * 160 + \nNTrx3MNorm * 80 + RubroProm3MNorm * 160'),
+    Principalidad STRING OPTIONS( description= 'if PTJEPrincipalidad<=100 then BAJA\nelseif PTJEPrincipalidad>100 and PTJEPrincipalidad<=250 then MEDIA\nelseif PTJEPrincipalidad>250 and PTJEPrincipalidad<=400 then ALTA\nelse MUY ALTA\n')
+              
+
+)
+PARTITION BY     FechaPeriodo
+OPTIONS(
+    require_partition_filter=TRUE,
+    description='Tabla temporal de etapa 1 de migración de proceso de principalidad.\nTabla creada por Esteban Ramírez'
+); 

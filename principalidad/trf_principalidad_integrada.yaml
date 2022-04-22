@@ -1,0 +1,6 @@
+processType: GcpExecScript
+projectId: {{project_bi}}
+
+
+dataset: {{ds_trf_bfa_cl_bi}}
+table: trf_principalidad_integrada
